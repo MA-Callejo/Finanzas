@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 data class Entrada(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val concepto: String,
-    val cantidad: Float,
+    val cantidad: Double,
     val dia: Int,
     val mes: Int,
     val anno: Int,

@@ -15,8 +15,11 @@ interface TipoDAO {
     @Insert
     suspend fun insert(tipos: Tipo)
 
-    @Query("DELETE FROM tipos where id = :id")
-    suspend fun insert(id: Int)
+    @Query("UPDATE tipos SET disponible=0 where id = :id")
+    suspend fun delete(id: Int)
+
+    @Query("UPDATE tipos SET disponible=1 where id = :id")
+    suspend fun restore(id: Int)
 
     @Update
     suspend fun update(tipo: Tipo)
