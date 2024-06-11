@@ -41,11 +41,14 @@ fun Greeting(context: Context) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "home") {
         composable("home") { Home(navController, daoEntradas, daoTipos, context) }
-        composable("historico") { Historico(daoEntradas, daoTipos, context) }
+        //composable("historico") { Historico(daoEntradas, daoTipos, context) }
         composable("settings") { Settings(daoTipos, context) }
-        /*composable("details/{itemId}") { backStackEntry ->
-            DetailsScreen(backStackEntry.arguments?.getString("itemId"), dao)
-        }*/
+        composable("historico/{anno}/{mes}/{dia}") { backStackEntry ->
+            val anno = backStackEntry.arguments?.getString("anno")?.toIntOrNull()
+            val mes = backStackEntry.arguments?.getString("mes")?.toIntOrNull()
+            val dia = backStackEntry.arguments?.getString("dia")?.toIntOrNull()
+            Historico(navController, anno, mes, dia, daoEntradas, daoTipos, context)
+        }
     }
 }
 

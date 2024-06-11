@@ -161,6 +161,7 @@ fun Settings(daoTipos: TipoDAO, context: Context) {
                     onValueChange = {
                         val valor = getValidatedNumber(it)
                         val valorNum = if (valor == "") 0f else valor.toFloat()
+                        text = valorNum.toString()
                         savePreference(context, "maxDia", valorNum)
                     },
                     placeholder = {

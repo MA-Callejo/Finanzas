@@ -63,6 +63,8 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawStyle
@@ -84,13 +86,17 @@ import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.time.LocalDateTime
 import java.util.Calendar
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.max
 
 fun getValidatedNumber(text: String): String {
     // Start by filtering out unwanted characters like commas and multiple decimals
     val textSinComa = text.replace(",", ".")
     val filteredChars = textSinComa.filterIndexed { index, c ->
         c in "0123456789" ||                      // Take all digits
-                (c == '.' && textSinComa.indexOf('.') == index)  // Take only the first decimal
+                (c == '.' && textSinComa.indexOf('.') == index) ||
+                (c == '-' && textSinComa.indexOf('-') == 0)// Take only the first decimal
     }
     // Now we need to remove extra digits from the input
     return if(filteredChars.contains('.')) {
@@ -121,6 +127,7 @@ fun prev(){*/
     var amount by remember { mutableStateOf("") }
     var tipo by remember { mutableStateOf("Tipo") }
     var tipoColor by remember { mutableStateOf(Color.Gray) }
+    var textColor by remember { mutableStateOf(Color.White) }
     var tipoId by remember { mutableIntStateOf(0) }
     var expanded by remember { mutableStateOf(false) }
     var showDetalles by remember { mutableStateOf(false) }
@@ -130,7 +137,7 @@ fun prev(){*/
     if(showDetalles){
         DialogDetalles(onDismis = {
             showDetalles = false
-        }, agrupados=agrupados)
+        }, agrupadosComp=agrupados)
     }
     if(showEdit){
         if(entradaEdit != null) {
@@ -188,7 +195,7 @@ fun prev(){*/
                             onDismissRequest = { expanded = false }) {
                             tipos.filter { t -> t.disponible == 1 }.forEach {
                                 DropdownMenuItem(
-                                    text = { Text(it.nombre) },
+                                    text = { Text(it.nombre, color = it.textColor()) },
                                     onClick = {
                                         expanded = false
                                         tipo = it.nombre
@@ -203,7 +210,7 @@ fun prev(){*/
                             modifier = Modifier.weight(1F),
                             colors = ButtonDefaults.buttonColors(containerColor = tipoColor),
                             onClick = { expanded = true }) {
-                            Text(text = tipo)
+                            Text(text = tipo, color = textColor)
                         }
                         Spacer(modifier = Modifier.width(5.dp))
                         OutlinedTextField(
@@ -260,8 +267,9 @@ fun prev(){*/
                 }
             }
             var inicio = 90f
-            val total1 = agrupados.sumOf { it.total }
+            val total1 = agrupados.filter { it.total > 0 }.sumOf { it.total }
             val total3 = gastos.sumOf { it.cantidad }
+            val total4 = (total3 / (getPreference(context,"maxDia")* currentTime.dayOfMonth))*360f
             val total2 = gastosHoy.sumOf { it.cantidad }
             val totalDegree = (total2 / getPreference(context, "maxDia")) * -360f
             Row(modifier = Modifier.padding(0.dp, 40.dp, 0.dp, 0.dp)) {
@@ -282,7 +290,7 @@ fun prev(){*/
                             )
                         }
                 ) {
-                    agrupados.forEach {
+                    agrupados.filter { it.total > 0 }.forEach {
                         val fin = ((it.total / total1) * 360f).toFloat()
                         drawArc(it.color(), -1f * inicio, -1f * fin, true)
                         inicio += fin
@@ -308,7 +316,7 @@ fun prev(){*/
                         .weight(1f)
                 )
             }
-            Row(modifier = Modifier.padding(0.dp, 2.dp, 0.dp, 0.dp)) {
+            /*Row(modifier = Modifier.padding(0.dp, 2.dp, 0.dp, 0.dp)) {
                 Text(
                     text = DecimalFormat("0.00€").format(total3) + " / "+ DecimalFormat("0.00€").format(getPreference(context,"maxDia")* currentTime.dayOfMonth),
                     color = if (total3 / (getPreference(
@@ -341,7 +349,7 @@ fun prev(){*/
                         .fillMaxWidth()
                         .weight(1f)
                 )
-            }
+            }*/
             Row(modifier = Modifier.padding(0.dp, 2.dp, 0.dp, 20.dp)) {
                 Text(
                     text = DecimalFormat("0.00€").format((getPreference(context, "maxDia") * currentTime.dayOfMonth) - total3),
@@ -413,7 +421,7 @@ fun prev(){*/
                 IconButton(modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(10.dp), onClick = { navController.navigate("historico") }) {
+                    .padding(10.dp), onClick = { navController.navigate("historico/"+currentTime.year.toString()+"/"+currentTime.monthValue.toString()+"/ ") }) {
                     Icon(
                         painter = painterResource(id = android.R.drawable.ic_menu_recent_history),
                         contentDescription = "",
@@ -438,7 +446,9 @@ fun prev(){*/
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-fun DialogDetalles(onDismis: () -> Unit = {}, agrupados: List<Agrupado> = listOf()){
+fun DialogDetalles(onDismis: () -> Unit = {}, agrupadosComp: List<Agrupado> = listOf()){
+    val agrupados = agrupadosComp.filter { it.total > 0 }
+    val agrupadosGanancias = agrupadosComp.filter { it.total <= 0 }
     val total1 = agrupados.sumOf { it.total }
     var inicio = 90f
     AlertDialog(
@@ -469,6 +479,20 @@ fun DialogDetalles(onDismis: () -> Unit = {}, agrupados: List<Agrupado> = listOf
                                 Text(text = String.format("%.2f€", it.total), color = it.textColor())
                                 Spacer(modifier = Modifier.width(5.dp))
                                 Text(text = String.format("%.0f", (it.total/total)*100)+"%", color = it.textColor())
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+                LazyColumn {
+                    items(agrupadosGanancias){
+                        Card(modifier = Modifier.padding(5.dp),
+                            colors = CardDefaults.cardColors(containerColor = it.color())) {
+                            Row(modifier = Modifier.padding(5.dp)){
+                                Text(text = it.nombre, modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f), color = it.textColor())
+                                Text(text = String.format("+%.2f€", it.total*-1f), color = it.textColor())
                             }
                         }
                     }
