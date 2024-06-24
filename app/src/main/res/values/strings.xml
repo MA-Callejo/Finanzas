@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Finanzas</string>
-    <string name="title_activity_main">Main</string>
+    <string name="app_name">DailyBudget</string>
+    <string name="title_activity_main">DailyBudget</string>
 </resources>

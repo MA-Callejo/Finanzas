@@ -1,6 +1,5 @@
 package com.kiwi.finanzas.ui.views
 
-import android.R
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -64,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.kiwi.finanzas.Mes
+import com.kiwi.finanzas.R
 import com.kiwi.finanzas.db.Agrupado
 import com.kiwi.finanzas.db.Entrada
 import com.kiwi.finanzas.db.EntradaDAO
@@ -362,7 +362,7 @@ fun Historico(navController: NavController, anno: Int?, mes: Int?, dia: Int?, da
                     .weight(1f)
                     .padding(10.dp), onClick = { createFileLauncher.launch("registros.csv") }) {
                     Icon(
-                        painter = painterResource(id = android.R.drawable.sym_contact_card),
+                        painter = painterResource(id = R.drawable.csv),
                         contentDescription = "",
                         tint = Color.White
                     )
@@ -372,7 +372,7 @@ fun Historico(navController: NavController, anno: Int?, mes: Int?, dia: Int?, da
                     .weight(1f)
                     .padding(10.dp), onClick = { navController.navigate("home") }) {
                     Icon(
-                        painter = painterResource(id = android.R.drawable.ic_dialog_info),
+                        painter = painterResource(id = R.drawable.casa),
                         contentDescription = "",
                         tint = Color.White
                     )

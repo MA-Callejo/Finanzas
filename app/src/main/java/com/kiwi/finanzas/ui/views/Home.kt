@@ -96,7 +96,7 @@ fun getValidatedNumber(text: String): String {
     val filteredChars = textSinComa.filterIndexed { index, c ->
         c in "0123456789" ||                      // Take all digits
                 (c == '.' && textSinComa.indexOf('.') == index) ||
-                (c == '-' && textSinComa.indexOf('-') == 0)// Take only the first decimal
+                (c == '-' && index == 0)// Take only the first decimal
     }
     // Now we need to remove extra digits from the input
     return if(filteredChars.contains('.')) {
@@ -124,7 +124,7 @@ fun prev(){*/
     val agrupados by daoEntradas.getTotales(currentTime.monthValue, currentTime.year).collectAsState(initial = emptyList())
     //val agrupados: List<Agrupado> = listOf()
     var text by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
+    var amount by remember { mutableStateOf("0.0") }
     var tipo by remember { mutableStateOf("Tipo") }
     var tipoColor by remember { mutableStateOf(Color.Gray) }
     var textColor by remember { mutableStateOf(Color.White) }
@@ -423,7 +423,7 @@ fun prev(){*/
                     .weight(1f)
                     .padding(10.dp), onClick = { navController.navigate("historico/"+currentTime.year.toString()+"/"+currentTime.monthValue.toString()+"/ ") }) {
                     Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_recent_history),
+                        painter = painterResource(id = R.drawable.historic),
                         contentDescription = "",
                         tint = Color.White
                     )
