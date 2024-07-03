@@ -394,13 +394,8 @@ fun ItemView(anno: Int?, mes: Int?, dia: Int?, tipo: Int = 0, onDetalles: (estad
     var detallesShow by remember { mutableStateOf(false) }
     var total = agrupados.sumOf { it.total }
     var totalGasto = agrupados.filter{it.total > 0}.sumOf { it.total }
-    var totalPrev = (when (tipo) {
-        1 -> maxDia * (if(anno == currentTime.year) currentTime.dayOfYear.toFloat() else 365f)
-        2 -> maxDia * (if(mes == currentTime.monthValue) currentTime.dayOfMonth.toFloat() else Mes.obtenerPorIndice(mes!! - 1, anno!!).dias.toFloat())
-        else -> maxDia
-    })
-    var resultado = totalPrev - total
-    var maxTotal = max(totalGasto, totalPrev.toDouble())
+    var resultado = total
+    var maxTotal = max(totalGasto, total)
     var inicio = 90f
     if(detallesShow){
         DialogDetalles(onDismis = {detallesShow = false
@@ -435,10 +430,10 @@ fun ItemView(anno: Int?, mes: Int?, dia: Int?, tipo: Int = 0, onDetalles: (estad
                 .padding(0.dp, 10.dp, 0.dp, 0.dp)
                 .fillMaxWidth(), textAlign = TextAlign.Center, style = TextStyle(fontWeight = FontWeight.Bold)
             )
-            Log.d("GASTO", "$dia : $resultado / $totalPrev")
-            Text(text=if(resultado >= 0) String.format("+%.2f€", resultado) else String.format("%.2f€", resultado), modifier = Modifier
+            Log.d("GASTO", "$dia : $resultado")
+            Text(text=if(resultado >= 0) String.format("%.2f€", resultado) else String.format("%.2f€", resultado*-1f), modifier = Modifier
                 .fillMaxWidth(), textAlign = TextAlign.Center,
-                color = if(resultado >= 0) myGreen else myRed)
+                color = if(resultado >= 0) myRed else myGreen)
         }
     }
 }

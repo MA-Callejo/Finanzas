@@ -33,6 +33,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -101,7 +103,7 @@ fun savePreference(context: Context, key: String, value: Float) {
 
 fun getPreference(context: Context, key: String): Float {
     val sharedPreferences: SharedPreferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-    return sharedPreferences.getFloat(key, 10f)
+    return sharedPreferences.getFloat(key, 0f)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,6 +114,8 @@ fun Settings(daoTipos: TipoDAO, context: Context) {
     var tipoSelected: Tipo? by remember { mutableStateOf(null) }
     var selector by remember { mutableStateOf(false) }
     var completos by remember { mutableStateOf(false) }
+    var expandedDay by remember { mutableStateOf(false)}
+    var periodo by remember { mutableStateOf(if(getPreference(context,"periodo") >= 0f) getPreference(context,"periodo") else 1f) }
     val coroutineScope = rememberCoroutineScope()
     if(selector){
         CustomDialog(tipo = tipoSelected, onDismis = {selector = false},
@@ -151,7 +155,7 @@ fun Settings(daoTipos: TipoDAO, context: Context) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    text = "Gasto maximo diario",
+                    text = "Gasto mensual",
                     color = Color.White
                 )
                 OutlinedTextField(
@@ -185,6 +189,52 @@ fun Settings(daoTipos: TipoDAO, context: Context) {
                     style = TextStyle(fontSize = 24.sp),
                     modifier = Modifier.padding(5.dp, 0.dp, 20.dp, 0.dp)
                 )
+            }
+            Row(modifier = Modifier.padding(0.dp, 40.dp, 0.dp, 0.dp), verticalAlignment = Alignment.CenterVertically) {
+                DropdownMenu(expanded = expandedDay,
+                    onDismissRequest = { expandedDay = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Diario") },
+                        onClick = {
+                            periodo = 1f
+                            savePreference(context, "periodo", periodo)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Semanal") },
+                        onClick = {
+                            periodo = 2f
+                            savePreference(context, "periodo", periodo)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Quincenal") },
+                        onClick = {
+                            periodo = 3f
+                            savePreference(context, "periodo", periodo)
+                        }
+                    )
+                }
+                Text(
+                    textAlign = TextAlign.Center,
+                    style = TextStyle(fontSize = 24.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    text = "Periodo de gestión: ",
+                    color = Color.White
+                )
+                TextButton(onClick = { expandedDay=true }) {
+                    Text(
+                        text = when (periodo) {
+                            1f -> "Diario"
+                            2f -> "Semanal"
+                            else -> "Quincenal"
+                        },
+                        style = TextStyle(fontSize = 24.sp),
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Spacer(modifier = Modifier
@@ -544,4 +594,95 @@ fun hsvToColor(hue: Float, saturation: Float, value: Float): Color {
         green = ((g + m) * 255).roundToInt(),
         blue = ((b + m) * 255).roundToInt()
     )
+}
+
+@Composable
+@Preview
+fun vista(){
+    Column(modifier = Modifier.blur(if (false) 16.dp else 0.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp, 50.dp, 20.dp, 20.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    textAlign = TextAlign.Center,
+                    style = TextStyle(fontSize = 24.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    text = "Gasto mensual",
+                    color = Color.White
+                )
+                OutlinedTextField(
+                    modifier = Modifier.width(100.dp),
+                    textStyle = TextStyle(fontSize = 24.sp),
+                    value = "text",
+                    onValueChange = {
+
+                    },
+                    placeholder = {
+                        Text(
+                            text = "Valor",
+                            modifier = Modifier.width(100.dp),
+                            style = TextStyle(fontSize = 24.sp)
+                        )
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    maxLines = 1,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                )
+                Text(
+                    text = "€",
+                    color = Color.White,
+                    style = TextStyle(fontSize = 24.sp),
+                    modifier = Modifier.padding(5.dp, 0.dp, 20.dp, 0.dp)
+                )
+            }
+            Row(modifier = Modifier.padding(0.dp, 40.dp, 0.dp, 0.dp), verticalAlignment = Alignment.CenterVertically) {
+                DropdownMenu(expanded = false,
+                    onDismissRequest = {  }) {
+                    DropdownMenuItem(
+                        text = { Text("Diario") },
+                        onClick = {
+
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Semanal") },
+                        onClick = {
+
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Quincenal") },
+                        onClick = {
+
+                        }
+                    )
+                }
+                Text(
+                    textAlign = TextAlign.Center,
+                    style = TextStyle(fontSize = 24.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    text = "Periodo de gestión:",
+                    color = Color.White
+                )
+                TextButton(onClick = {  }) {
+                    Text(
+                        text = "Diario",
+                        style = TextStyle(fontSize = 24.sp),
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+        }
+    }
 }

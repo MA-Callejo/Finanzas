@@ -60,6 +60,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.blur
@@ -108,6 +109,10 @@ fun getValidatedNumber(text: String): String {
     }
 }
 
+fun isLeapYear(year: Int): Boolean {
+    return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Home(navController: NavHostController, daoEntradas: EntradaDAO, daoTipos: TipoDAO, context: Context) {
@@ -124,7 +129,7 @@ fun prev(){*/
     val agrupados by daoEntradas.getTotales(currentTime.monthValue, currentTime.year).collectAsState(initial = emptyList())
     //val agrupados: List<Agrupado> = listOf()
     var text by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("0.0") }
+    var amount by remember { mutableStateOf("") }
     var tipo by remember { mutableStateOf("Tipo") }
     var tipoColor by remember { mutableStateOf(Color.Gray) }
     var textColor by remember { mutableStateOf(Color.White) }
@@ -134,6 +139,24 @@ fun prev(){*/
     var showEdit by remember { mutableStateOf(false) }
     var entradaEdit: Entrada? by remember { mutableStateOf(null) }
     val coroutineScope = rememberCoroutineScope()
+    val periodo by remember { mutableStateOf(if(getPreference(context,"periodo") >= 0f) getPreference(context,"periodo") else 1f) }
+    val gastosPeriodo by if(periodo == 1f) {
+        daoEntradas.getGastoPeriodoDia(
+            ((currentTime.year-1)*372) + ((currentTime.monthValue - 1)*31) + currentTime.dayOfMonth
+        ).collectAsState(initial = emptyList())
+    }else{
+        if(periodo == 2f){
+            val timePeriod = currentTime.minusDays(currentTime.dayOfWeek.value - 1L)
+            daoEntradas.getGastoPeriodoSemana(
+                ((timePeriod.year-1)*372) + ((timePeriod.monthValue - 1)*31) + timePeriod.dayOfMonth,
+            ).collectAsState(initial = emptyList())
+        } else {
+            val timePeriod = currentTime.minusDays((currentTime.dayOfWeek.value - 1L)+7L)
+            daoEntradas.getGastoPeriodoQuincena(
+                ((timePeriod.year-1)*372) + ((timePeriod.monthValue - 1)*31) + timePeriod.dayOfMonth,
+            ).collectAsState(initial = emptyList())
+        }
+    }
     if(showDetalles){
         DialogDetalles(onDismis = {
             showDetalles = false
@@ -269,9 +292,13 @@ fun prev(){*/
             var inicio = 90f
             val total1 = agrupados.filter { it.total > 0 }.sumOf { it.total }
             val total3 = gastos.sumOf { it.cantidad }
-            val total4 = (total3 / (getPreference(context,"maxDia")* currentTime.dayOfMonth))*360f
-            val total2 = gastosHoy.sumOf { it.cantidad }
-            val totalDegree = (total2 / getPreference(context, "maxDia")) * -360f
+            val gastoMax = when(periodo){
+                1f -> {getPreference(context, "maxDia")/(currentTime.month.length(isLeapYear(currentTime.year)))} // Dias
+                2f -> {getPreference(context, "maxDia")/((currentTime.month.length(isLeapYear(currentTime.year)))/7f)} // Semanas
+                else -> {getPreference(context, "maxDia")/((currentTime.month.length(isLeapYear(currentTime.year)))/15f)}// Quincena
+            }
+            val total2 = gastosPeriodo.sumOf { it.cantidad }
+            val totalDegree = (total2 / gastoMax) * -360f
             Row(modifier = Modifier.padding(0.dp, 40.dp, 0.dp, 0.dp)) {
                 Spacer(
                     modifier = Modifier
@@ -316,47 +343,14 @@ fun prev(){*/
                         .weight(1f)
                 )
             }
-            /*Row(modifier = Modifier.padding(0.dp, 2.dp, 0.dp, 0.dp)) {
-                Text(
-                    text = DecimalFormat("0.00€").format(total3) + " / "+ DecimalFormat("0.00€").format(getPreference(context,"maxDia")* currentTime.dayOfMonth),
-                    color = if (total3 / (getPreference(
-                            context,
-                            "maxDia"
-                        ) * currentTime.dayOfMonth) >= 0.66f
-                    ) myRed else if (total3 / (getPreference(
-                            context,
-                            "maxDia"
-                        ) * currentTime.dayOfMonth) >= 0.66f
-                    ) myYellow else myGreen,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                )
-                Text(
-                    text = DecimalFormat("0.00€").format(total2) + " / "+ DecimalFormat("0.00€").format(getPreference(context,"maxDia")),
-                    color = if (total2 / getPreference(
-                            context,
-                            "maxDia"
-                        ) >= 0.66f
-                    ) myRed else if (total2 / getPreference(
-                            context,
-                            "maxDia"
-                        ) >= 0.33f
-                    ) myYellow else myGreen,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                )
-            }*/
             Row(modifier = Modifier.padding(0.dp, 2.dp, 0.dp, 20.dp)) {
                 Text(
-                    text = DecimalFormat("0.00€").format((getPreference(context, "maxDia") * currentTime.dayOfMonth) - total3),
-                    color = if ((getPreference(
-                            context,
-                            "maxDia"
-                        ) * currentTime.dayOfMonth) - total3 < 0f
+                    text = DecimalFormat("0.00€").format(((getPreference(context, "maxDia")/currentTime.month.length(
+                        isLeapYear(currentTime.year)
+                    )) * currentTime.dayOfMonth) - total3),
+                    color = if (((getPreference(context,"maxDia")/currentTime.month.length(
+                            isLeapYear(currentTime.year)
+                        )) * currentTime.dayOfMonth) - total3 < 0f
                     ) myRed else myGreen,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -365,8 +359,8 @@ fun prev(){*/
                     style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 )
                 Text(
-                    text = DecimalFormat("0.00€").format(getPreference(context, "maxDia") - total2),
-                    color = if (getPreference(context, "maxDia") - total2 < 0) myRed else myGreen,
+                    text = DecimalFormat("0.00€").format(gastoMax - total2),
+                    color = if (gastoMax - total2 < 0) myRed else myGreen,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -602,7 +596,9 @@ fun DialogEdit(context: Context, onDismis: () -> Unit = {}, onDelete: (id: Int) 
                             )
                         }
                         Row {
-                            Spacer(modifier = Modifier.fillMaxWidth().weight(1f))
+                            Spacer(modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f))
                             TextButton(onClick = {
                                 datePickerDialog.show()
                             }, colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)) {

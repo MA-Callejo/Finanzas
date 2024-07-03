@@ -35,6 +35,15 @@ interface EntradaDAO {
     @Query("SELECT * FROM entradas where mes = :mes and anno = :anno order by dia desc, hora desc, min desc")
     fun getAllMes(mes: Int, anno: Int): Flow<List<Entrada>>
 
+    @Query("SELECT * FROM entradas where (((anno-1)*372) + ((mes-1)*31) + dia) >= :dia")
+    fun getGastoPeriodoDia(dia: Int): Flow<List<Entrada>>
+
+    @Query("SELECT * FROM entradas where (((anno-1)*372) + ((mes-1)*31) + dia) >= :dia")
+    fun getGastoPeriodoSemana(dia: Int): Flow<List<Entrada>>
+
+    @Query("SELECT * FROM entradas where (((anno-1)*372) + ((mes-1)*31) + dia) >= :dia")
+    fun getGastoPeriodoQuincena(dia: Int): Flow<List<Entrada>>
+
     @Query("SELECT * FROM entradas where mes = :mes and anno = :anno and dia = :dia")
     fun getAllDia(mes: Int, dia: Int, anno: Int): Flow<List<Entrada>>
 
